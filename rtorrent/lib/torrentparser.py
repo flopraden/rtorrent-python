@@ -26,6 +26,7 @@ import hashlib
 
 if is_py3():
     from urllib.request import urlopen  # @UnresolvedImport @UnusedImport
+    from urllib.parse import urlparse, parse_qs
 else:
     from urllib2 import urlopen  # @UnresolvedImport @Reimport
 
@@ -51,8 +52,8 @@ class TorrentParser():
         assert self._raw_torrent is not None, "Couldn't get raw_torrent."
         if self._torrent_decoded is None:
             self._decode_torrent()
-        assert isinstance(self._torrent_decoded, dict), "Invalid torrent file."
-        self._parse_torrent()
+            assert isinstance(self._torrent_decoded, dict), "Invalid torrent file."
+            self._parse_torrent()
 
     def _is_raw(self):
         raw = False
@@ -80,22 +81,31 @@ class TorrentParser():
         elif re.search("^(http|ftp)s?:\/\/", self.torrent, re.I):
             self.file_type = "url"
             self._raw_torrent = urlopen(self.torrent).read()
+        # magnet link?
+        elif re.search("^magnet:", self.torrent, re.I):
+            self.file_type = "url"
+            parsed = urlparse(self.torrent)
+            query = parse_qs(parsed.query)
+            self.title = query['dn'][0]
+            self.info_hash = query['xt'][0][9:]
+            self.trackers = query['tr']
+            self._torrent_decoded = query
+            self._raw_torrent = self.torrent
 
     def _decode_torrent(self, raw_torrent=None):
         if raw_torrent is None:
             raw_torrent = self._raw_torrent
         self._torrent_decoded = bencode.decode(raw_torrent)
-        return(self._torrent_decoded)
+        return self._torrent_decoded
 
     def _calc_info_hash(self):
-        self.info_hash = None
-        if "info" in self._torrent_decoded.keys():
+        if self.info_hash is not None and "info" in self._torrent_decoded.keys():
             info_encoded = bencode.encode(self._torrent_decoded["info"])
 
             if info_encoded:
                 self.info_hash = hashlib.sha1(info_encoded).hexdigest().upper()
 
-        return(self.info_hash)
+        return self.info_hash
 
     def _parse_torrent(self):
         for k in self._torrent_decoded:

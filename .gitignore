@@ -6,7 +6,6 @@
 *.swp
 /__pycache__
 /logs
-/tests
 /build
 /dist
 /*egg-info

@@ -263,7 +263,7 @@ class RTorrent:
             assert info_hash in [t.info_hash for t in self.torrents],\
                 "Adding torrent was unsuccessful."
 
-        return(find_torrent(info_hash, self.torrents))
+        return find_torrent(info_hash, self.torrents)
 
     def load_torrent_simple(self, torrent, file_type,
                             start=False, verbose=False):
