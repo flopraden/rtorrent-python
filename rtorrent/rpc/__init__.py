@@ -83,7 +83,9 @@ class Method:
 
         if self.varname is None:
             self.varname = get_varname(self.rpc_call)
-        assert self.varname is not None, "Couldn't get variable name."
+            if self.varname is None:
+                self.varname = get_varname(self.method_name)
+        assert self.varname is not None, "Couldn't get variable name. (%s/%s)" % (self.method_name,self.rpc_call)
 
     def __repr__(self):
         return safe_repr("Method(method_name='{0}', rpc_call='{1}')",
